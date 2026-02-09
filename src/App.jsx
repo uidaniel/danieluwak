@@ -347,7 +347,9 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           className="nav-content"
         >
-          <div className="nav-logo">DEV/PORT</div>
+          <div className="nav-logo">
+            <img src="/signature.svg" alt="" className="signature" />
+          </div>
           <button className="nav-toggle" onClick={() => setMenuOpen(!menuOpen)}>
             <span></span>
             <span></span>
@@ -424,9 +426,11 @@ export default function App() {
               className="profile-frame"
             >
               <div className="profile-placeholder">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
+                <img
+                  src="/avatar.jpeg"
+                  alt=""
+                  className="profile-placeholder svg"
+                />
               </div>
             </motion.div>
 
@@ -701,7 +705,7 @@ export default function App() {
       {/* Footer */}
       <footer className="footer">
         <div className="container">
-          <p>© 2025 Alex Schmidt • Built with React & Framer Motion</p>
+          <p>© 2026 Uwak Daniel Iniobong • Built with React & Framer Motion</p>
           <p className="footer-subtitle">
             Engineered with precision / Mit Liebe gebaut
           </p>
@@ -721,6 +725,15 @@ export default function App() {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
+        }
+
+        .signature {
+          width: 90px;
+        }
+
+        .avatar {
+          width: 200px;
+          height: 200px;
         }
 
         :root {
@@ -973,7 +986,7 @@ export default function App() {
 
         .profile-placeholder svg {
           width: 100px;
-          height: 100px;
+          height: 100%;
           color: var(--gray-600);
         }
 
