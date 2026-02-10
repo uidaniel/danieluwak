@@ -387,7 +387,7 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="hero-label"
             >
-              WILLKOMMEN
+              WELCOME
             </motion.div>
 
             <motion.h1
@@ -408,7 +408,7 @@ export default function App() {
               <span className="separator">•</span>
               <span>UI/UX Designer</span>
               <span className="separator">•</span>
-              <span>Applied Physics (Electronics) Student @UNILAG</span>
+              <span>Applied Physics (Electronics) Student @ UNILAG</span>
               <span className="separator">•</span>
               <span>Aspiring Firmware Engineer</span>
             </motion.div>
@@ -434,9 +434,7 @@ export default function App() {
               transition={{ delay: 0.6 }}
               className="hero-intro"
             >
-              I build scalable digital systems with clean architecture. Von Web
-              APIs bis embedded systems – immer auf der Suche nach eleganten
-              Lösungen für komplexe Probleme.
+              I build scalable digital systems with clean architecture.
             </motion.p>
 
             <motion.div
@@ -451,7 +449,7 @@ export default function App() {
                     .scrollIntoView({ behavior: "smooth" })
                 }
               >
-                Projekte ansehen / View Work →
+                View Works →
               </MagneticButton>
             </motion.div>
           </motion.div>
@@ -494,19 +492,19 @@ export default function App() {
                 </strong>
                 , while I’m actively growing into embedded systems and firmware
                 engineering.
-                <em>
+                {/* <em>
                   Die Kombination von high-level Software und hardware-naher
                   Programmierung fasziniert mich
-                </em>{" "}
+                </em>{" "} */}
                 – every Arduino project deepens my understanding of timing,
                 interrupts, and real hardware constraints.
               </p>
 
               <p>
                 Whether it’s designing intuitive interfaces, structuring
-                scalable APIs, or debugging microcontroller code –{" "}
-                <em>ich liebe die Herausforderung</em>, complex problems into
-                elegant, reliable solutions that work beyond the screen.
+                scalable APIs, or debugging microcontroller code, complex
+                problems into elegant, reliable solutions that work beyond the
+                screen.
               </p>
             </div>
           </GlassCard>
@@ -568,9 +566,7 @@ export default function App() {
           >
             <h2>Behind the Scenes / Arduino Lernprozess</h2>
             <div className="section-line"></div>
-            <p className="section-subtitle">
-              Was ich gerade lerne – my journey into embedded systems
-            </p>
+            <p className="section-subtitle">My journey into embedded systems</p>
           </motion.div>
 
           <div className="timeline">
@@ -584,7 +580,7 @@ export default function App() {
                 <h3>{exp.title}</h3>
                 <p>{exp.description}</p>
                 <div className="components-list">
-                  <strong>Komponenten:</strong>
+                  <strong>Components:</strong>
                   <div className="component-tags">
                     {exp.components.map((comp, i) => (
                       <span key={i} className="component-tag">
@@ -637,15 +633,9 @@ export default function App() {
                 <input type="email" placeholder="E-Mail" required />
               </div>
               <div className="form-group">
-                <textarea
-                  placeholder="Nachricht / Message"
-                  rows="5"
-                  required
-                ></textarea>
+                <textarea placeholder="Message" rows="5" required></textarea>
               </div>
-              <MagneticButton type="submit">
-                Senden / Send Message
-              </MagneticButton>
+              <MagneticButton type="submit">Send Message</MagneticButton>
             </form>
           </GlassCard>
 
