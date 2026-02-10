@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   motion,
   useScroll,
@@ -6,6 +6,8 @@ import {
   useSpring,
   AnimatePresence,
 } from "framer-motion";
+import ProjectSection from "../components/ProjectSection";
+import { projects } from "../data/projects";
 
 // Tech stack logos as SVG paths/icons (simplified representations)
 const TechLogos = {
@@ -24,21 +26,13 @@ const TechLogos = {
       <path d="M12 1.85c-.27 0-.55.07-.78.2l-7.44 4.3c-.48.28-.78.8-.78 1.36v8.58c0 .56.3 1.08.78 1.36l1.95 1.12c.95.46 1.27.47 1.71.47 1.4 0 2.21-.85 2.21-2.33V8.44c0-.12-.1-.22-.22-.22H8.5c-.13 0-.23.10-.23.22v8.47c0 .66-.68 1.31-1.77.76L4.45 16.5a.26.26 0 0 1-.11-.21V7.71c0-.09.04-.17.11-.21l7.44-4.29c.06-.04.16-.04.22 0l7.44 4.29c.07.04.11.12.11.21v8.58c0 .08-.04.16-.11.21l-7.44 4.29c-.06.04-.16.04-.22 0L10 19.65c-.03-.02-.07-.02-.1-.01-.42.23-.5.28-.89.4-.1.03-.24.08.06.23l1.67.96c.27.15.58.24.89.24.31 0 .62-.09.89-.24l7.44-4.3c.48-.28.78-.8.78-1.36V7.71c0-.56-.3-1.08-.78-1.36l-7.44-4.3c-.23-.13-.5-.2-.78-.2M14 8c-2.12 0-3.39.89-3.39 2.39 0 1.61 1.26 2.08 3.3 2.28 2.43.24 2.62.6 2.62 1.08 0 .83-.67 1.18-2.23 1.18-1.98 0-2.4-.49-2.55-1.47a.226.226 0 0 0-.22-.18h-.96c-.12 0-.21.09-.21.22 0 1.24.68 2.74 3.94 2.74 2.35 0 3.7-.93 3.7-2.55 0-1.61-1.08-2.03-3.37-2.34-2.31-.3-2.54-.46-2.54-1 0-.45.2-1.05 1.91-1.05 1.5 0 2.09.33 2.32 1.36.02.1.11.17.21.17h.97c.05 0 .11-.02.15-.07.04-.04.07-.11.05-.17C17.56 9.05 16.38 8 14 8z" />
     </svg>
   ),
-  PHP: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 6C5.92 6 1 9.03 1 12.75s4.92 6.75 11 6.75 11-3.03 11-6.75S18.08 6 12 6m-2.5 9.77c-.38.07-.75.1-1.09.1-.36 0-.67-.04-.94-.13-.26-.09-.48-.22-.64-.39s-.28-.38-.36-.62c-.08-.24-.12-.52-.12-.83 0-.34.04-.65.11-.92.08-.28.19-.53.35-.74.15-.21.34-.37.57-.48.22-.12.49-.17.79-.17.15 0 .31.01.47.04.16.02.3.06.43.1l-.17.73c-.12-.04-.24-.07-.36-.09-.13-.02-.25-.03-.36-.03-.21 0-.4.05-.56.14-.16.1-.29.23-.39.41-.11.17-.19.37-.24.61-.06.23-.08.48-.08.75 0 .49.09.85.28 1.06.19.22.48.32.88.32.12 0 .24 0 .36-.02.12-.01.24-.04.36-.07l.1.73M18 8.5c-.26-.09-.57-.13-.94-.13-.22 0-.45.02-.67.07-.22.04-.45.11-.67.2l-.28 1.61h1.17l-.15.72H15.3l-.45 2.68c-.03.17-.05.34-.06.51s-.02.33-.02.49c0 .22.04.38.13.49.08.11.23.16.44.16.11 0 .23-.01.36-.04.12-.02.24-.06.36-.1l-.1.73c-.18.06-.36.11-.55.14-.19.03-.38.05-.58.05-.34 0-.62-.04-.84-.13-.22-.09-.4-.22-.53-.38-.13-.17-.22-.37-.26-.6-.05-.24-.07-.5-.07-.78 0-.18.01-.38.03-.58.02-.21.04-.42.08-.63l.5-2.99c-.22.06-.43.13-.64.21-.21.07-.4.15-.59.22l.12-.76c.18-.07.38-.14.59-.21.21-.07.43-.13.65-.2.11-.64.24-1.25.37-1.83.14-.58.29-1.12.45-1.63.34-.11.69-.2 1.06-.28.36-.07.73-.11 1.1-.11.38 0 .68.05.91.14.23.1.34.27.34.52 0 .11-.02.22-.05.33-.04.11-.09.21-.16.29-.07.09-.15.16-.24.21-.1.05-.21.08-.33.08-.11 0-.21-.03-.29-.08-.09-.05-.16-.12-.22-.21.06-.09.11-.17.15-.26.05-.09.07-.18.07-.28 0-.1-.03-.18-.09-.23M8.67 8.37c-.22-.04-.45-.07-.67-.07-.37 0-.68.04-.94.13-.06.05-.09.13-.09.23 0 .1.02.19.07.28.04.09.09.17.15.26-.06.09-.13.16-.22.21-.08.05-.18.08-.29.08-.12 0-.23-.03-.33-.08-.09-.05-.17-.12-.24-.21-.07-.08-.12-.18-.16-.29-.03-.11-.05-.22-.05-.33 0-.25.11-.42.34-.52.23-.09.53-.14.91-.14.37 0 .74.04 1.1.11.37.08.72.17 1.06.28.16.51.31 1.05.45 1.63.13.58.26 1.19.37 1.83l.65.2c.21.07.41.14.59.21l.12.76c-.19-.07-.38-.15-.59-.22-.21-.08-.42-.15-.64-.21l.5 2.99c.04.21.06.42.08.63.02.2.03.4.03.58 0 .28-.02.54-.07.78-.04.23-.13.43-.26.6-.13.16-.31.29-.53.38-.22.09-.5.13-.84.13-.2 0-.39-.02-.58-.05-.19-.03-.37-.08-.55-.14l-.1-.73c.12.04.24.08.36.1.13.03.25.04.36.04.21 0 .36-.05.44-.16.09-.11.13-.27.13-.49 0-.16-.01-.32-.02-.49-.01-.17-.03-.34-.06-.51l-.45-2.68H6.17l-.15-.72h1.17L6.91 9.7c-.22-.09-.45-.16-.67-.2-.22-.05-.45-.07-.67-.07-.37 0-.68.04-.94.13-.06.05-.09.13-.09.23 0 .1.02.19.07.28.04.09.09.17.15.26-.06.09-.13.16-.22.21-.08.05-.18.08-.29.08-.12 0-.23-.03-.33-.08-.09-.05-.17-.12-.24-.21-.07-.08-.12-.18-.16-.29-.03-.11-.05-.22-.05-.33 0-.25.11-.42.34-.52.23-.09.53-.14.91-.14.37 0 .74.04 1.1.11.37.08.72.17 1.06.28.16.51.31 1.05.45 1.63.13.58.26 1.19.37 1.83l.65.2c.21.07.41.14.59.21l.12.76c-.19-.07-.38-.15-.59-.22-.21-.08-.42-.15-.64-.21l.5 2.99c.04.21.06.42.08.63.02.2.03.4.03.58 0 .28-.02.54-.07.78-.04.23-.13.43-.26.6-.13.16-.31.29-.53.38-.22.09-.5.13-.84.13-.2 0-.39-.02-.58-.05-.19-.03-.37-.08-.55-.14l-.1-.73c.12.04.24.08.36.1.13.03.25.04.36.04.21 0 .36-.05.44-.16.09-.11.13-.27.13-.49 0-.16-.01-.32-.02-.49-.01-.17-.03-.34-.06-.51l-.45-2.68H3.67l-.15-.72h1.17l-.28-1.67c-.22-.09-.45-.16-.67-.2-.22-.05-.45-.07-.67-.07-.37 0-.68.04-.94.13-.06.05-.09.13-.09.23 0 .1.02.19.07.28.04.09.09.17.15.26-.06.09-.13.16-.22.21-.08.05-.18.08-.29.08-.12 0-.23-.03-.33-.08-.09-.05-.17-.12-.24-.21-.07-.08-.12-.18-.16-.29-.03-.11-.05-.22-.05-.33 0-.25.11-.42.34-.52.23-.09.53-.14.91-.14.37 0 .74.04 1.1.11.37.08.72.17 1.06.28.16.51.31 1.05.45 1.63.13.58.26 1.19.37 1.83l.65.2c.21.07.41.14.59.21l.12.76c-.19-.07-.38-.15-.59-.22-.21-.08-.42-.15-.64-.21l.5 2.99c.04.21.06.42.08.63.02.2.03.4.03.58 0 .28-.02.54-.07.78-.04.23-.13.43-.26.6-.13.16-.31.29-.53.38-.22.09-.5.13-.84.13-.2 0-.39-.02-.58-.05-.19-.03-.37-.08-.55-.14l-.1-.73c.12.04.24.08.36.1.13.03.25.04.36.04.21 0 .36-.05.44-.16.09-.11.13-.27.13-.49 0-.16-.01-.32-.02-.49-.01-.17-.03-.34-.06-.51L2.57 12H1.42l-.15-.72h1.17L2.16 9.7c-.22-.09-.45-.16-.67-.2-.22-.05-.45-.07-.67-.07-.37 0-.68.04-.94.13-.06.05-.09.13-.09.23 0 .1.02.19.07.28.04.09.09.17.15.26-.06.09-.13.16-.22.21-.08.05-.18.08-.29.08-.12 0-.23-.03-.33-.08-.09-.05-.17-.12-.24-.21-.07-.08-.12-.18-.16-.29-.03-.11-.05-.22-.05-.33 0-.25.11-.42.34-.52.23-.09.53-.14.91-.14.37 0 .74.04 1.1.11.37.08.72.17 1.06.28.16.51.31 1.05.45 1.63.13.58.26 1.19.37 1.83l.65.2c.21.07.41.14.59.21l.12.76c-.19-.07-.38-.15-.59-.22-.21-.08-.42-.15-.64-.21l.5 2.99c.04.21.06.42.08.63.02.2.03.4.03.58 0 .28-.02.54-.07.78-.04.23-.13.43-.26.6-.13.16-.31.29-.53.38-.22.09-.5.13-.84.13-.2 0-.39-.02-.58-.05-.19-.03-.37-.08-.55-.14l-.1-.73c.12.04.24.08.36.1.13.03.25.04.36.04.21 0 .36-.05.44-.16.09-.11.13-.27.13-.49 0-.16-.01-.32-.02-.49-.01-.17-.03-.34-.06-.51L3.2 12H2.05l-.15-.72h1.17l-.28-1.61c-.22-.09-.45-.16-.67-.2" />
-    </svg>
-  ),
+  PHP: () => <img src="/php.svg" alt="" className="php" />,
   Laravel: () => (
     <svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M23.642 5.43a.364.364 0 0 1 .014.1v5.149c0 .135-.073.26-.189.326l-4.323 2.49v4.934a.378.378 0 0 1-.188.326L9.93 23.949a.316.316 0 0 1-.066.027c-.008.002-.016.008-.024.01a.348.348 0 0 1-.192 0c-.011-.002-.02-.008-.03-.012-.02-.008-.042-.014-.062-.025L.533 18.755a.376.376 0 0 1-.189-.326V2.974c0-.033.005-.066.014-.098.003-.012.01-.02.014-.032a.369.369 0 0 1 .023-.058c.004-.013.015-.022.023-.033l.033-.045c.012-.01.025-.018.037-.027.014-.012.027-.024.041-.034H.53L5.043.05a.375.375 0 0 1 .375 0L9.93 2.647h.002c.015.01.027.021.04.033l.038.027c.013.014.02.03.033.045.008.011.02.021.025.033.01.02.017.038.024.058.003.011.01.021.013.032.01.031.014.064.014.098v9.652l3.76-2.164V5.527c0-.033.004-.066.013-.098.003-.01.01-.02.013-.032a.487.487 0 0 1 .024-.059c.007-.012.018-.02.025-.033.012-.015.021-.03.033-.043.012-.012.025-.02.037-.028.014-.01.026-.023.041-.032h.001l4.513-2.598a.375.375 0 0 1 .375 0l4.513 2.598c.016.01.027.021.042.031.012.01.025.018.036.028.013.014.022.03.034.044.008.012.019.021.024.033.011.02.018.04.024.06.006.01.012.021.015.032zm-.74 5.032V6.179l-1.578.908-2.182 1.256v4.283zm-4.51 7.75v-4.287l-2.147 1.225-6.126 3.498v4.325zM1.093 3.624v14.588l8.273 4.761v-4.325l-4.322-2.445-.002-.003H5.04c-.014-.01-.025-.021-.04-.031-.011-.01-.024-.018-.035-.027l-.001-.002c-.013-.012-.021-.025-.031-.039-.01-.012-.021-.023-.028-.037h-.002c-.008-.014-.013-.031-.02-.047-.006-.016-.014-.027-.018-.043a.49.49 0 0 1-.008-.057c-.002-.014-.006-.027-.006-.041V5.789l-2.18-1.257zM5.23.81L1.47 2.974l3.76 2.164 3.758-2.164zm1.956 13.505l2.182-1.256V3.624l-1.58.91-2.182 1.255v9.435zm11.581-10.95l-3.76 2.163 3.76 2.163 3.759-2.164zm-.376 4.978L16.21 7.087 14.63 6.18v4.283l2.182 1.256 1.58.908zm-8.65 9.654l5.514-3.148 2.756-1.572-3.757-2.163-4.323 2.489-3.941 2.27z" />
     </svg>
   ),
-  Arduino: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.82 12c0 6.52-5.27 11.79-11.79 11.79S.24 18.52.24 12 5.51.21 12.03.21 23.82 5.48 23.82 12M8.01 14.75V9.25H6.46v2.17H3.71V9.25H2.16v5.5h1.55v-2.23h2.75v2.23zm8.77-2.75c0 1.54-1.27 2.8-2.82 2.8A2.82 2.82 0 0 1 11.14 12c0-1.54 1.27-2.8 2.82-2.8A2.82 2.82 0 0 1 16.78 12m1.54 0c0-2.4-1.96-4.35-4.36-4.35A4.36 4.36 0 0 0 9.6 12a4.36 4.36 0 0 0 4.36 4.35 4.36 4.36 0 0 0 4.36-4.35m3.67-1.33h-1.62v1.66h1.62v1.67h1.62v-1.67H24v-1.66h-1.39V9h-1.62z" />
-    </svg>
-  ),
+  Arduino: () => <img src="/arduino.svg" alt="" className="php" />,
   Git: () => (
     <svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M23.546 10.93L13.067.452a1.55 1.55 0 0 0-2.188 0L8.708 2.627l2.76 2.76a1.838 1.838 0 0 1 1.847 2.284 1.838 1.838 0 0 1 2.285 1.847l2.658 2.658a1.838 1.838 0 0 1 1.847 2.285 1.838 1.838 0 1 1-3.142-1.284l-2.48-2.48v6.518a1.838 1.838 0 0 1 .486 3.015 1.838 1.838 0 1 1-2.774-2.368V9.285a1.838 1.838 0 0 1-.997-2.408L8.435 4.114.452 12.097a1.55 1.55 0 0 0 0 2.188l10.48 10.479a1.55 1.55 0 0 0 2.188 0l10.426-10.426a1.55 1.55 0 0 0 0-2.188" />
@@ -259,38 +253,38 @@ export default function App() {
     restDelta: 0.001,
   });
 
-  const projects = [
-    {
-      title: "Project Alpha",
-      tags: ["React", "Node.js", "API"],
-      problem:
-        "Legacy system needed modernization. Multiple data silos prevented efficient workflow. Users complained about slow response times and poor mobile experience.",
-      solution:
-        "Built a full-stack application with React frontend and Node.js backend. Implemented REST API architecture with JWT authentication. Designed responsive UI with real-time updates using WebSocket connections.",
-      result:
-        "Reduced load times by 73%. Unified data access across departments. Mobile usage increased 340% within first quarter.",
-    },
-    {
-      title: "Project Beta",
-      tags: ["Laravel", "PHP", "Database"],
-      problem:
-        "E-commerce platform struggled with inventory management. Stock discrepancies led to overselling. Customer satisfaction scores were declining rapidly.",
-      solution:
-        "Developed Laravel-based inventory tracking system. Integrated real-time synchronization across multiple warehouses. Created automated alerts for low stock and reordering workflows.",
-      result:
-        "Eliminated overselling incidents completely. Inventory accuracy improved to 99.7%. Customer complaints reduced by 85%.",
-    },
-    {
-      title: "Project Gamma",
-      tags: ["JavaScript", "UI/UX", "Animation"],
-      problem:
-        "Corporate website had high bounce rates. Users found navigation confusing. Brand identity felt disconnected from digital presence.",
-      solution:
-        "Redesigned complete user experience with modern JavaScript frameworks. Implemented smooth animations and intuitive navigation patterns. Created cohesive visual language matching brand guidelines.",
-      result:
-        "Bounce rate decreased from 68% to 23%. Average session duration increased 4.2x. Won industry design award for user experience.",
-    },
-  ];
+  // const projects = [
+  //   {
+  //     title: "Project Alpha",
+  //     tags: ["React", "Node.js", "API"],
+  //     problem:
+  //       "Legacy system needed modernization. Multiple data silos prevented efficient workflow. Users complained about slow response times and poor mobile experience.",
+  //     solution:
+  //       "Built a full-stack application with React frontend and Node.js backend. Implemented REST API architecture with JWT authentication. Designed responsive UI with real-time updates using WebSocket connections.",
+  //     result:
+  //       "Reduced load times by 73%. Unified data access across departments. Mobile usage increased 340% within first quarter.",
+  //   },
+  //   {
+  //     title: "Project Beta",
+  //     tags: ["Laravel", "PHP", "Database"],
+  //     problem:
+  //       "E-commerce platform struggled with inventory management. Stock discrepancies led to overselling. Customer satisfaction scores were declining rapidly.",
+  //     solution:
+  //       "Developed Laravel-based inventory tracking system. Integrated real-time synchronization across multiple warehouses. Created automated alerts for low stock and reordering workflows.",
+  //     result:
+  //       "Eliminated overselling incidents completely. Inventory accuracy improved to 99.7%. Customer complaints reduced by 85%.",
+  //   },
+  //   {
+  //     title: "Project Gamma",
+  //     tags: ["JavaScript", "UI/UX", "Animation"],
+  //     problem:
+  //       "Corporate website had high bounce rates. Users found navigation confusing. Brand identity felt disconnected from digital presence.",
+  //     solution:
+  //       "Redesigned complete user experience with modern JavaScript frameworks. Implemented smooth animations and intuitive navigation patterns. Created cohesive visual language matching brand guidelines.",
+  //     result:
+  //       "Bounce rate decreased from 68% to 23%. Average session duration increased 4.2x. Won industry design award for user experience.",
+  //   },
+  // ];
 
   const arduinoExperiments = [
     {
@@ -483,25 +477,36 @@ export default function App() {
           <GlassCard delay={0.2}>
             <div className="about-content">
               <p>
-                I approach software development as an engineering discipline –
-                focusing on{" "}
-                <strong>architecture, scalability, and maintainability</strong>.
-                My work spans from building REST APIs and database systems to
-                designing intuitive user interfaces.
+                I approach technology as an engineering discipline – focused on{" "}
+                <strong>
+                  architecture, scalability, and long-term maintainability
+                </strong>
+                . As an Applied Physics student at the University of Lagos, I
+                blend scientific problem-solving with software development,
+                building systems that are both technically solid and
+                thoughtfully designed.
               </p>
+
               <p>
-                Currently expanding into{" "}
-                <strong>embedded systems and firmware development</strong>. Die
-                Kombination von high-level software engineering und
-                hardware-naher Programmierung fasziniert mich. Every Arduino
-                experiment teaches me something new about timing, interrupts,
-                and resource constraints.
+                My experience spans{" "}
+                <strong>
+                  full-stack development, UI/UX design, and backend systems
+                </strong>
+                , while I’m actively growing into embedded systems and firmware
+                engineering.
+                <em>
+                  Die Kombination von high-level Software und hardware-naher
+                  Programmierung fasziniert mich
+                </em>{" "}
+                – every Arduino project deepens my understanding of timing,
+                interrupts, and real hardware constraints.
               </p>
+
               <p>
-                Whether it's optimizing a database query, designing a component
-                library, or debugging microcontroller code – ich liebe die
-                Herausforderung, komplexe Probleme in elegante Lösungen zu
-                verwandeln.
+                Whether it’s designing intuitive interfaces, structuring
+                scalable APIs, or debugging microcontroller code –{" "}
+                <em>ich liebe die Herausforderung</em>, complex problems into
+                elegant, reliable solutions that work beyond the screen.
               </p>
             </div>
           </GlassCard>
@@ -550,45 +555,7 @@ export default function App() {
       </section>
 
       {/* Projects Section */}
-      <section id="projects" className="section">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="section-header"
-          >
-            <h2>Meine Projekte / My Projects</h2>
-            <div className="section-line"></div>
-          </motion.div>
-
-          <div className="projects-grid">
-            {projects.map((project, index) => (
-              <GlassCard key={index} delay={index * 0.15}>
-                <div className="project-card">
-                  <h3>{project.title}</h3>
-                  <div className="project-tags">
-                    {project.tags.map((tag, i) => (
-                      <span key={i} className="tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="project-preview">
-                    {project.problem.substring(0, 120)}...
-                  </p>
-                  <MagneticButton
-                    variant="secondary"
-                    onClick={() => openProject(project)}
-                  >
-                    Details ansehen →
-                  </MagneticButton>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProjectSection projects={projects} openProject={openProject} />
 
       {/* BTS Arduino Section */}
       <section id="bts" className="section section-dark">
@@ -734,6 +701,48 @@ export default function App() {
         .avatar {
           width: 200px;
           height: 200px;
+        }
+
+        .php {
+          width: 40px;
+        }
+
+        .projects-tabs {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+        }
+
+        .tab {
+          padding: 8px 14px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: var(--gray-300);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .tab.active {
+          background: rgba(255, 255, 255, 0.12);
+          color: white;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination {
+          margin-top: 24px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .pagination button {
+          background: rgba(255, 255, 255, 0.08);
+          border: none;
+          padding: 6px 12px;
+          border-radius: 8px;
         }
 
         :root {
