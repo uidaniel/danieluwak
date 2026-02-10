@@ -243,6 +243,16 @@ export default function ProjectSection({ projects, openProject }) {
 
       {/* ===== SECTION ===== */}
       <section id="projects" className="section">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="section-header"
+        >
+          <h2>Meine Projekte / My Projects</h2>
+          <div className="section-line"></div>
+        </motion.div>
+
         <div className="container">
           <div className="projects-tabs">
             {tabs.map((tab) => (
