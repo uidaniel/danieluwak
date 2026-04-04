@@ -899,7 +899,7 @@ export default function App() {
             {[
               "Software Engineer",
               "UI/UX Designer",
-              "Physics Student @ UNILAG",
+              "Applied Physics Student @ UNILAG",
               "Aspiring Firmware Engineer",
             ].map((r, i) => (
               <span key={i} className="role-chip">

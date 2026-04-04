@@ -204,7 +204,7 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 .label-line {
   display: block;
@@ -217,7 +217,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.1;
-  margin-bottom: 4rem;
+  margin-bottom: 2rem;
   color: var(--off);
 }
 
@@ -690,7 +690,7 @@ body {
 .proj-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
 }
 .proj-tab {
@@ -1624,7 +1624,7 @@ body {
     display: none;
   }
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
   .hero-cta {
     flex-direction: column;
