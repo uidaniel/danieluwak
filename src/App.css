@@ -162,7 +162,7 @@ body {
   gap: 6px;
   background: none;
   border: none;
-  cursor: none;
+  cursor: pointer;
   padding: 4px;
 }
 .burger span {
@@ -180,33 +180,7 @@ body {
   transform: translateY(-3.75px) rotate(-45deg);
 }
 
-/* Mobile menu */
-.mobile-menu {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(8, 8, 8, 0.97);
-  backdrop-filter: blur(20px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  z-index: 999;
-}
-.mobile-link {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--off);
-  text-decoration: none;
-  letter-spacing: -0.02em;
-  transition: color 0.2s;
-}
-.mobile-link:hover {
-  color: var(--accent);
-}
+/* Mobile menu — styles defined later in the file */
 
 /* ── Container / Section ── */
 .container {
@@ -518,6 +492,7 @@ body {
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-family: var(--font);
   font-size: 0.62rem;
@@ -952,6 +927,7 @@ body {
 .process-num {
   font-size: 3.5rem;
   font-weight: 900;
+  margin-left: 1rem;
   letter-spacing: -0.06em;
   color: rgba(200, 255, 0, 0.1);
   line-height: 1;
@@ -964,6 +940,7 @@ body {
   display: none;
 }
 .process-body {
+  margin-left: 1rem;
 }
 .process-title {
   font-size: 0.9rem;
@@ -991,6 +968,7 @@ body {
 .connect-heading {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
+  margin-top: 2rem;
   letter-spacing: -0.04em;
   line-height: 1.2;
   color: var(--off);
@@ -1500,6 +1478,7 @@ body {
 .drawer-visit {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   font-family: var(--font);
   font-size: 0.6rem;
@@ -1645,7 +1624,7 @@ body {
     display: none;
   }
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
   .hero-cta {
     flex-direction: column;
@@ -1831,7 +1810,7 @@ body {
   position: fixed;
   inset: 0;
   background: #080808;
-  z-index: 2000;
+  z-index: 4500; /* above FAB (4000) and below project drawer (5000) */
   display: flex;
   flex-direction: column;
   /* Override old styles */
@@ -1923,12 +1902,21 @@ body {
   letter-spacing: -0.04em !important;
   padding: 0.4rem 0 !important;
   border-bottom: none !important;
-  transition: color 0.2s !important;
+  transition: color 0.15s !important;
   line-height: 1.15 !important;
 }
 
 .mobile-link:hover {
   color: var(--white) !important;
+}
+
+/* Active / tapped state — yellow flash */
+.mobile-link.active {
+  color: var(--accent) !important;
+}
+
+.mobile-link.active .mobile-link-num {
+  color: var(--accent) !important;
 }
 
 .mobile-link:hover .mobile-link-num {
@@ -1960,4 +1948,26 @@ body {
 .scroll-hint,
 .scroll-line {
   display: none !important;
+}
+
+/* ── Social icon SVG (replaces text initials) ── */
+.social-icon-svg {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.social-card:hover .social-icon-svg {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.social-icon-svg svg {
+  width: 18px;
+  height: 18px;
 }
