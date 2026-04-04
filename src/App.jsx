@@ -1,15 +1,67 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  AnimatePresence,
-} from "framer-motion";
-import ProjectSection from "../components/ProjectSection";
-import { projects } from "../data/projects";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useSpring, AnimatePresence } from "framer-motion";
+import "./App.css";
 
-// Tech stack logos as SVG paths/icons (simplified representations)
+// ── Typing Hook ──
+const useTypingEffect = (text, speed = 65, startDelay = 900) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDone, setIsDone] = useState(false);
+  useEffect(() => {
+    let i = 0;
+    setDisplayedText("");
+    setIsDone(false);
+    const t = setTimeout(() => {
+      const iv = setInterval(() => {
+        i++;
+        setDisplayedText(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(iv);
+          setIsDone(true);
+        }
+      }, speed);
+      return () => clearInterval(iv);
+    }, startDelay);
+    return () => clearTimeout(t);
+  }, [text, speed, startDelay]);
+  return { displayedText, isDone };
+};
+
+// ── Custom Cursor ──
+const CustomCursor = () => {
+  const ringRef = useRef(null);
+  const dotRef = useRef(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const curr = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    const onMove = (e) => {
+      pos.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("mousemove", onMove);
+    let raf;
+    const loop = () => {
+      curr.current.x += (pos.current.x - curr.current.x) * 0.12;
+      curr.current.y += (pos.current.y - curr.current.y) * 0.12;
+      if (ringRef.current)
+        ringRef.current.style.transform = `translate(${curr.current.x - 20}px,${curr.current.y - 20}px)`;
+      if (dotRef.current)
+        dotRef.current.style.transform = `translate(${pos.current.x - 3}px,${pos.current.y - 3}px)`;
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return (
+    <>
+      <div ref={ringRef} className="cursor-ring" />
+      <div ref={dotRef} className="cursor-dot" />
+    </>
+  );
+};
+
+// ── Tech SVGs ──
 const TechLogos = {
   React: () => (
     <svg viewBox="0 0 24 24" fill="currentColor">
@@ -26,13 +78,13 @@ const TechLogos = {
       <path d="M12 1.85c-.27 0-.55.07-.78.2l-7.44 4.3c-.48.28-.78.8-.78 1.36v8.58c0 .56.3 1.08.78 1.36l1.95 1.12c.95.46 1.27.47 1.71.47 1.4 0 2.21-.85 2.21-2.33V8.44c0-.12-.1-.22-.22-.22H8.5c-.13 0-.23.10-.23.22v8.47c0 .66-.68 1.31-1.77.76L4.45 16.5a.26.26 0 0 1-.11-.21V7.71c0-.09.04-.17.11-.21l7.44-4.29c.06-.04.16-.04.22 0l7.44 4.29c.07.04.11.12.11.21v8.58c0 .08-.04.16-.11.21l-7.44 4.29c-.06.04-.16.04-.22 0L10 19.65c-.03-.02-.07-.02-.1-.01-.42.23-.5.28-.89.4-.1.03-.24.08.06.23l1.67.96c.27.15.58.24.89.24.31 0 .62-.09.89-.24l7.44-4.3c.48-.28.78-.8.78-1.36V7.71c0-.56-.3-1.08-.78-1.36l-7.44-4.3c-.23-.13-.5-.2-.78-.2M14 8c-2.12 0-3.39.89-3.39 2.39 0 1.61 1.26 2.08 3.3 2.28 2.43.24 2.62.6 2.62 1.08 0 .83-.67 1.18-2.23 1.18-1.98 0-2.4-.49-2.55-1.47a.226.226 0 0 0-.22-.18h-.96c-.12 0-.21.09-.21.22 0 1.24.68 2.74 3.94 2.74 2.35 0 3.7-.93 3.7-2.55 0-1.61-1.08-2.03-3.37-2.34-2.31-.3-2.54-.46-2.54-1 0-.45.2-1.05 1.91-1.05 1.5 0 2.09.33 2.32 1.36.02.1.11.17.21.17h.97c.05 0 .11-.02.15-.07.04-.04.07-.11.05-.17C17.56 9.05 16.38 8 14 8z" />
     </svg>
   ),
-  PHP: () => <img src="/php.svg" alt="" className="php" />,
+  PHP: () => <img src="/php.svg" alt="" className="tech-img" />,
   Laravel: () => (
     <svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M23.642 5.43a.364.364 0 0 1 .014.1v5.149c0 .135-.073.26-.189.326l-4.323 2.49v4.934a.378.378 0 0 1-.188.326L9.93 23.949a.316.316 0 0 1-.066.027c-.008.002-.016.008-.024.01a.348.348 0 0 1-.192 0c-.011-.002-.02-.008-.03-.012-.02-.008-.042-.014-.062-.025L.533 18.755a.376.376 0 0 1-.189-.326V2.974c0-.033.005-.066.014-.098.003-.012.01-.02.014-.032a.369.369 0 0 1 .023-.058c.004-.013.015-.022.023-.033l.033-.045c.012-.01.025-.018.037-.027.014-.012.027-.024.041-.034H.53L5.043.05a.375.375 0 0 1 .375 0L9.93 2.647h.002c.015.01.027.021.04.033l.038.027c.013.014.02.03.033.045.008.011.02.021.025.033.01.02.017.038.024.058.003.011.01.021.013.032.01.031.014.064.014.098v9.652l3.76-2.164V5.527c0-.033.004-.066.013-.098.003-.01.01-.02.013-.032a.487.487 0 0 1 .024-.059c.007-.012.018-.02.025-.033.012-.015.021-.03.033-.043.012-.012.025-.02.037-.028.014-.01.026-.023.041-.032h.001l4.513-2.598a.375.375 0 0 1 .375 0l4.513 2.598c.016.01.027.021.042.031.012.01.025.018.036.028.013.014.022.03.034.044.008.012.019.021.024.033.011.02.018.04.024.06.006.01.012.021.015.032zm-.74 5.032V6.179l-1.578.908-2.182 1.256v4.283zm-4.51 7.75v-4.287l-2.147 1.225-6.126 3.498v4.325zM1.093 3.624v14.588l8.273 4.761v-4.325l-4.322-2.445-.002-.003H5.04c-.014-.01-.025-.021-.04-.031-.011-.01-.024-.018-.035-.027l-.001-.002c-.013-.012-.021-.025-.031-.039-.01-.012-.021-.023-.028-.037h-.002c-.008-.014-.013-.031-.02-.047-.006-.016-.014-.027-.018-.043a.49.49 0 0 1-.008-.057c-.002-.014-.006-.027-.006-.041V5.789l-2.18-1.257zM5.23.81L1.47 2.974l3.76 2.164 3.758-2.164zm1.956 13.505l2.182-1.256V3.624l-1.58.91-2.182 1.255v9.435zm11.581-10.95l-3.76 2.163 3.76 2.163 3.759-2.164zm-.376 4.978L16.21 7.087 14.63 6.18v4.283l2.182 1.256 1.58.908zm-8.65 9.654l5.514-3.148 2.756-1.572-3.757-2.163-4.323 2.489-3.941 2.27z" />
     </svg>
   ),
-  Arduino: () => <img src="/arduino.svg" alt="" className="php" />,
+  Arduino: () => <img src="/arduino.svg" alt="" className="tech-img" />,
   Git: () => (
     <svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M23.546 10.93L13.067.452a1.55 1.55 0 0 0-2.188 0L8.708 2.627l2.76 2.76a1.838 1.838 0 0 1 1.847 2.284 1.838 1.838 0 0 1 2.285 1.847l2.658 2.658a1.838 1.838 0 0 1 1.847 2.285 1.838 1.838 0 1 1-3.142-1.284l-2.48-2.48v6.518a1.838 1.838 0 0 1 .486 3.015 1.838 1.838 0 1 1-2.774-2.368V9.285a1.838 1.838 0 0 1-.997-2.408L8.435 4.114.452 12.097a1.55 1.55 0 0 0 0 2.188l10.48 10.479a1.55 1.55 0 0 0 2.188 0l10.426-10.426a1.55 1.55 0 0 0 0-2.188" />
@@ -40,1455 +92,853 @@ const TechLogos = {
   ),
 };
 
-// Glassmorphic Card Component
-const GlassCard = ({ children, className = "", delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.6, delay }}
-    className={`glass-card ${className}`}
-  >
-    {children}
-  </motion.div>
+// ── Data ──
+const works = [
+  {
+    name: "Envyra",
+    tag: "Green Energy",
+    description:
+      "A bold and modern green energy company website designed to showcase renewable energy solutions, communicate sustainability values, and attract both residential and commercial clients looking to transition to cleaner, smarter power sources.",
+    url: "envyra.netlify.app",
+    color: "#0a1f0e",
+    year: "2025",
+    role: "UI/UX Design & Development",
+  },
+  {
+    name: "Zoneod",
+    tag: "Fintech",
+    description:
+      "A sleek and professional fintech and digital payments platform website built to present a card-issuing and financial technology product, helping businesses and developers understand capabilities and get started with integrations.",
+    url: "zoneod.netlify.app",
+    color: "#0f0f1a",
+    year: "2025",
+    role: "Full-stack Development",
+  },
+  {
+    name: "Nachotopia",
+    tag: "Pet Care",
+    description:
+      "A warm, colorful, and playful pet care services website crafted to connect pet owners with grooming, boarding, veterinary, and adoption services, making it easy and enjoyable for people to find trusted care for their animals.",
+    url: "nachotopia.netlify.app",
+    color: "#1a0a00",
+    year: "2024",
+    role: "UI/UX Design & Development",
+  },
+  {
+    name: "host8",
+    tag: "Web Hosting",
+    description:
+      "A dark, high-tech web hosting company website designed to appeal to developers, startups, and enterprises looking for reliable cloud infrastructure, VPS hosting, and server solutions with a strong emphasis on performance.",
+    url: "host8.netlify.app",
+    color: "#050510",
+    year: "2024",
+    role: "Frontend Development",
+  },
+  {
+    name: "Hermoon",
+    tag: "Luxury Travel",
+    description:
+      "An elegant and refined luxury hotel and travel booking website crafted to help travelers discover handpicked premium accommodations around the world, with a clean editorial aesthetic that inspires trust and effortless booking.",
+    url: "hermoon.netlify.app",
+    color: "#1a1208",
+    year: "2025",
+    role: "UI/UX Design & Development",
+  },
+  {
+    name: "SEATH®",
+    tag: "Real Estate",
+    description:
+      "A sophisticated and architectural real estate agency website built to position the brand as a premium property firm, attracting high-net-worth buyers, sellers, and investors seeking residential and investment properties.",
+    url: "seath.netlify.app",
+    color: "#0d0d0d",
+    year: "2025",
+    role: "Brand & Web Design",
+  },
+  {
+    name: "SyDEWALK",
+    tag: "Fashion",
+    description:
+      "A dark, editorial, and culturally driven streetwear fashion brand website designed to speak directly to style-conscious consumers who value quiet confidence, minimalist aesthetics, and clothing built for people who move with intent.",
+    url: "sydewalk.netlify.app",
+    color: "#0a0a0a",
+    year: "2024",
+    role: "Brand Identity & Web Design",
+  },
+  {
+    name: "Meerova",
+    tag: "Luxury Furniture",
+    description:
+      "A refined and visually stunning luxury furniture brand website created to showcase handcrafted, timeless furniture pieces, communicating the brand's commitment to precision craftsmanship, premium materials, and minimalist design.",
+    url: "meerova.netlify.app",
+    color: "#18120e",
+    year: "2025",
+    role: "UI/UX Design & Development",
+  },
+  {
+    name: "Swipeely",
+    tag: "Fintech",
+    description:
+      "A modern and feature-rich fintech digital card platform website built to attract developers, startups, and businesses who want to integrate card issuance, payment processing, and financial infrastructure with speed and simplicity.",
+    url: "swipeely.netlify.app",
+    color: "#060616",
+    year: "2025",
+    role: "Frontend Development",
+  },
+];
+
+const techs = [
+  { name: "React", Icon: TechLogos.React },
+  { name: "JavaScript", Icon: TechLogos.JavaScript },
+  { name: "Node.js", Icon: TechLogos.Node },
+  { name: "PHP", Icon: TechLogos.PHP },
+  { name: "Laravel", Icon: TechLogos.Laravel },
+  { name: "Arduino", Icon: TechLogos.Arduino },
+  { name: "Git", Icon: TechLogos.Git },
+];
+
+const arduinoExperiments = [
+  {
+    date: "Nov 2024",
+    title: "LED Matrix Display",
+    description:
+      "Built 8×8 LED matrix controller. Explored multiplexing and timing control at a hardware level.",
+    components: ["Arduino Uno", "MAX7219", "LEDs"],
+  },
+  {
+    date: "Dec 2024",
+    title: "Temperature Monitor",
+    description:
+      "DHT22 sensor with LCD display integration. Hands-on with I2C communication protocols.",
+    components: ["Arduino Nano", "DHT22", "16×2 LCD"],
+  },
+  {
+    date: "Jan 2025",
+    title: "Motor Controller",
+    description:
+      "PWM-based DC motor speed control. Understanding H-bridge circuits and feedback loops.",
+    components: ["Arduino Mega", "L298N", "Encoders"],
+  },
+];
+
+// ── Mac Mockup ──
+const MacMockup = ({ url, color }) => (
+  <div className="mac-mockup">
+    <div className="mac-bar">
+      <div className="mac-dots">
+        <span className="dot red" />
+        <span className="dot yellow" />
+        <span className="dot green" />
+      </div>
+      <div className="mac-address">
+        <span>{url}</span>
+      </div>
+    </div>
+    <div className="mac-screen" style={{ background: color }}>
+      <div className="mock-inner">
+        <div className="mock-topbar">
+          <div className="mock-logo" />
+          <div className="mock-links">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+        <div className="mock-body">
+          <div className="mock-h1" />
+          <div className="mock-h2" />
+          <div className="mock-h2 short" />
+          <div className="mock-btn" />
+        </div>
+      </div>
+    </div>
+  </div>
 );
 
-// Magnetic Button Component
-const MagneticButton = ({ children, onClick, variant = "primary" }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const buttonRef = useRef(null);
+// ── Project Drawer ──
+const ProjectDrawer = ({ work, onClose }) => {
+  // Close on Escape key
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
-  const handleMouseMove = (e) => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left - rect.width / 2) * 0.3;
-    const y = (e.clientY - rect.top - rect.height / 2) * 0.3;
-    setPosition({ x, y });
+  // Lock body scroll when open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  const stagger = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.07, delayChildren: 0.25 } },
+  };
+  const item = {
+    hidden: { opacity: 0, y: 22 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+    },
   };
 
-  const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
-  };
-
-  return (
-    <motion.button
-      ref={buttonRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      animate={{ x: position.x, y: position.y }}
-      transition={{ type: "spring", stiffness: 150, damping: 15 }}
-      whileTap={{ scale: 0.95 }}
-      className={`magnetic-btn ${variant}`}
-      onClick={onClick}
-    >
-      {children}
-    </motion.button>
-  );
-};
-
-// Drawer Component
-const Drawer = ({ isOpen, onClose, project }) => {
   return (
     <AnimatePresence>
-      {isOpen && (
+      {work && (
         <>
+          {/* Backdrop */}
           <motion.div
+            className="drawer-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="drawer-overlay"
+            transition={{ duration: 0.4 }}
             onClick={onClose}
           />
-          <motion.div
+
+          {/* Panel */}
+          <motion.aside
+            className="drawer-panel"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="drawer"
+            transition={{
+              type: "spring",
+              stiffness: 280,
+              damping: 32,
+              mass: 0.9,
+            }}
           >
-            <button className="drawer-close" onClick={onClose}>
-              ×
-            </button>
-            {project && (
-              <div className="drawer-content">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {project.title}
-                </motion.h2>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="drawer-tags"
-                >
-                  {project.tags.map((tag, i) => (
-                    <span key={i} className="tag">
-                      {tag}
-                    </span>
-                  ))}
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="drawer-section"
-                >
-                  <h3>Das Problem</h3>
-                  <p>{project.problem}</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="drawer-section"
-                >
-                  <h3>Die Lösung</h3>
-                  <p>{project.solution}</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="drawer-section"
-                >
-                  <h3>Ergebnis</h3>
-                  <p>{project.result}</p>
-                </motion.div>
+            {/* Top bar */}
+            <div className="drawer-topbar">
+              <div className="drawer-eyebrow">
+                <span className="drawer-index">
+                  {String(works.indexOf(work) + 1).padStart(2, "0")}
+                </span>
+                <span className="drawer-tag-top">{work.tag}</span>
               </div>
-            )}
-          </motion.div>
+              <button
+                className="drawer-close"
+                onClick={onClose}
+                aria-label="Close drawer"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path
+                    d="M1 1L17 17M17 1L1 17"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="drawer-body">
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+                className="drawer-content"
+              >
+                {/* Mockup */}
+                <motion.div variants={item} className="drawer-mockup">
+                  <MacMockup url={work.url} color={work.color} />
+                </motion.div>
+
+                {/* Title */}
+                <motion.h2 variants={item} className="drawer-title">
+                  {work.name}
+                </motion.h2>
+
+                {/* Meta row */}
+                <motion.div variants={item} className="drawer-meta">
+                  <div className="drawer-meta-item">
+                    <span className="drawer-meta-label">Year</span>
+                    <span className="drawer-meta-value">{work.year}</span>
+                  </div>
+                  <div className="drawer-meta-item">
+                    <span className="drawer-meta-label">Role</span>
+                    <span className="drawer-meta-value">{work.role}</span>
+                  </div>
+                  <div className="drawer-meta-item">
+                    <span className="drawer-meta-label">URL</span>
+                    <span className="drawer-meta-value">{work.url}</span>
+                  </div>
+                </motion.div>
+
+                {/* Divider */}
+                <motion.div variants={item} className="drawer-divider" />
+
+                {/* Description */}
+                <motion.div variants={item} className="drawer-section">
+                  <span className="drawer-section-label">
+                    About the project
+                  </span>
+                  <p className="drawer-section-text">{work.description}</p>
+                </motion.div>
+
+                {/* CTA */}
+                <motion.div variants={item} className="drawer-cta">
+                  <a
+                    href={`https://${work.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="drawer-visit"
+                  >
+                    <span>Visit Live Site</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path
+                        d="M2 12L12 2M12 2H5M12 2V9"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </a>
+                  <button className="drawer-dismiss" onClick={onClose}>
+                    Close
+                  </button>
+                </motion.div>
+
+                {/* Nav between projects */}
+                <motion.div variants={item} className="drawer-nav">
+                  {(() => {
+                    const idx = works.indexOf(work);
+                    const prev = works[idx - 1];
+                    const next = works[idx + 1];
+                    return (
+                      <>
+                        <button
+                          className={`drawer-nav-btn ${!prev ? "disabled" : ""}`}
+                          onClick={() => prev && onClose(prev)}
+                          disabled={!prev}
+                        >
+                          ← {prev ? prev.name : "—"}
+                        </button>
+                        <button
+                          className={`drawer-nav-btn ${!next ? "disabled" : ""}`}
+                          onClick={() => next && onClose(next)}
+                          disabled={!next}
+                        >
+                          {next ? next.name : "—"} →
+                        </button>
+                      </>
+                    );
+                  })()}
+                </motion.div>
+              </motion.div>
+            </div>
+          </motion.aside>
         </>
       )}
     </AnimatePresence>
   );
 };
 
-// Animated Tech Logo
-const AnimatedTechLogo = ({ Icon, name, delay }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const logoRef = useRef(null);
-
-  return (
-    <motion.div
-      ref={logoRef}
-      initial={{ opacity: 0, scale: 0.5, rotateY: -180 }}
-      whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
-      viewport={{ once: true }}
-      transition={{
-        duration: 0.8,
-        delay,
-        type: "spring",
-        stiffness: 100,
-      }}
-      whileHover={{
-        scale: 1.2,
-        rotateY: 360,
-        transition: { duration: 0.6 },
-      }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      className="tech-logo-wrapper"
-    >
-      <div className={`tech-logo ${isHovered ? "hovered" : ""}`}>
-        <Icon />
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-          className="tech-name"
-        >
-          {name}
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-// Marquee Component
-const TechMarquee = () => {
-  const techs = [
-    { name: "React", Icon: TechLogos.React },
-    { name: "JavaScript", Icon: TechLogos.JavaScript },
-    { name: "Node.js", Icon: TechLogos.Node },
-    { name: "PHP", Icon: TechLogos.PHP },
-    { name: "Laravel", Icon: TechLogos.Laravel },
-    { name: "Arduino", Icon: TechLogos.Arduino },
-    { name: "Git", Icon: TechLogos.Git },
-  ];
-
-  return (
-    <div className="marquee-container">
-      <motion.div
-        className="marquee"
-        animate={{ x: [0, -1400] }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      >
-        {[...techs, ...techs, ...techs].map((tech, i) => (
-          <div key={i} className="marquee-item">
-            <tech.Icon />
-            <span>{tech.name}</span>
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  );
-};
-
-// Main Portfolio Component
+// ── Main App ──
 export default function App() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const [activeWork, setActiveWork] = useState(null);
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001,
-  });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const { displayedText, isDone } = useTypingEffect(
+    "Uwak Daniel Iniobong.",
+    65,
+    900,
+  );
 
-  // const projects = [
-  //   {
-  //     title: "Project Alpha",
-  //     tags: ["React", "Node.js", "API"],
-  //     problem:
-  //       "Legacy system needed modernization. Multiple data silos prevented efficient workflow. Users complained about slow response times and poor mobile experience.",
-  //     solution:
-  //       "Built a full-stack application with React frontend and Node.js backend. Implemented REST API architecture with JWT authentication. Designed responsive UI with real-time updates using WebSocket connections.",
-  //     result:
-  //       "Reduced load times by 73%. Unified data access across departments. Mobile usage increased 340% within first quarter.",
-  //   },
-  //   {
-  //     title: "Project Beta",
-  //     tags: ["Laravel", "PHP", "Database"],
-  //     problem:
-  //       "E-commerce platform struggled with inventory management. Stock discrepancies led to overselling. Customer satisfaction scores were declining rapidly.",
-  //     solution:
-  //       "Developed Laravel-based inventory tracking system. Integrated real-time synchronization across multiple warehouses. Created automated alerts for low stock and reordering workflows.",
-  //     result:
-  //       "Eliminated overselling incidents completely. Inventory accuracy improved to 99.7%. Customer complaints reduced by 85%.",
-  //   },
-  //   {
-  //     title: "Project Gamma",
-  //     tags: ["JavaScript", "UI/UX", "Animation"],
-  //     problem:
-  //       "Corporate website had high bounce rates. Users found navigation confusing. Brand identity felt disconnected from digital presence.",
-  //     solution:
-  //       "Redesigned complete user experience with modern JavaScript frameworks. Implemented smooth animations and intuitive navigation patterns. Created cohesive visual language matching brand guidelines.",
-  //     result:
-  //       "Bounce rate decreased from 68% to 23%. Average session duration increased 4.2x. Won industry design award for user experience.",
-  //   },
-  // ];
+  const navItems = ["Home", "About", "Stack", "Projects", "BTS", "Contact"];
 
-  const arduinoExperiments = [
-    {
-      date: "2024-11",
-      title: "LED Matrix Display",
-      description:
-        "Built 8x8 LED matrix controller. Learning multiplexing and timing control.",
-      components: ["Arduino Uno", "MAX7219", "LEDs"],
-    },
-    {
-      date: "2024-12",
-      title: "Temperature Monitor",
-      description:
-        "DHT22 sensor integration with LCD display. Experimenting with I2C communication.",
-      components: ["Arduino Nano", "DHT22", "16x2 LCD"],
-    },
-    {
-      date: "2025-01",
-      title: "Motor Controller",
-      description:
-        "PWM-based DC motor speed control. Understanding H-bridge circuits and feedback loops.",
-      components: ["Arduino Mega", "L298N", "Encoders"],
-    },
-  ];
-
-  const openProject = (project) => {
-    setSelectedProject(project);
-    setDrawerOpen(true);
-  };
-
-  const techCategories = {
-    Frontend: [
-      { name: "React", Icon: TechLogos.React },
-      { name: "JavaScript", Icon: TechLogos.JavaScript },
-    ],
-    Backend: [
-      { name: "Node.js", Icon: TechLogos.Node },
-      { name: "PHP", Icon: TechLogos.PHP },
-      { name: "Laravel", Icon: TechLogos.Laravel },
-    ],
-    Embedded: [{ name: "Arduino", Icon: TechLogos.Arduino }],
-    Tools: [{ name: "Git", Icon: TechLogos.Git }],
+  // Handle drawer navigation (prev/next)
+  const handleDrawerClose = (nextWork) => {
+    if (nextWork && typeof nextWork === "object") {
+      setActiveWork(null);
+      setTimeout(() => setActiveWork(nextWork), 80);
+    } else {
+      setActiveWork(null);
+    }
   };
 
   return (
-    <div className="portfolio">
-      {/* Progress Bar */}
-      <motion.div className="progress-bar" style={{ scaleX }} />
+    <div className="app">
+      <CustomCursor />
+      <motion.div className="scroll-bar" style={{ scaleX }} />
 
-      {/* Navigation */}
+      {/* Drawer */}
+      <AnimatePresence mode="wait">
+        {activeWork && (
+          <ProjectDrawer
+            key={activeWork.name}
+            work={activeWork}
+            onClose={handleDrawerClose}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── NAV ── */}
       <nav className="nav">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="nav-content"
-        >
-          <div className="nav-logo">
-            <img src="/signature.svg" alt="" className="signature" />
-          </div>
-          <button className="nav-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
+        <div className="nav-inner">
+          <a href="#home" className="nav-brand">
+            <img src="/signature.svg" alt="signature" className="signature" />
+          </a>
+          <button
+            className={`burger ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="menu"
+          >
+            <span />
+            <span />
           </button>
           <div className={`nav-links ${menuOpen ? "open" : ""}`}>
-            <a href="#hero" onClick={() => setMenuOpen(false)}>
-              Start
-            </a>
-            <a href="#about" onClick={() => setMenuOpen(false)}>
-              Über
-            </a>
-            <a href="#stack" onClick={() => setMenuOpen(false)}>
-              Stack
-            </a>
-            <a href="#projects" onClick={() => setMenuOpen(false)}>
-              Projekte
-            </a>
-            <a href="#bts" onClick={() => setMenuOpen(false)}>
-              BTS
-            </a>
-            <a href="#contact" onClick={() => setMenuOpen(false)}>
-              Kontakt
-            </a>
+            {navItems.map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                onClick={() => setMenuOpen(false)}
+                className="nav-link"
+              >
+                {item}
+              </a>
+            ))}
           </div>
-        </motion.div>
+        </div>
       </nav>
 
-      {/* Hero Section */}
-      <section id="hero" className="hero">
-        <div className="container">
+      {/* ── HERO ── */}
+      <section id="home" className="hero">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+        <div className="orb orb-3" />
+        <div className="hero-grid" />
+        <div className="hero-inner">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            className="hero-content"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-badge"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="hero-label"
-            >
-              WELCOME
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <span className="gradient-text">Uwak Daniel Iniobong.</span>
-            </motion.h1>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="hero-roles"
-            >
-              <span>Software Engineer</span>
-              <span className="separator">•</span>
-              <span>UI/UX Designer</span>
-              <span className="separator">•</span>
-              <span>Applied Physics (Electronics) Student @ UNILAG</span>
-              <span className="separator">•</span>
-              <span>Aspiring Firmware Engineer</span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-              className="profile-frame"
-            >
-              <div className="profile-placeholder">
+            <span className="badge-dot" />
+            Available for projects
+          </motion.div>
+          <motion.h1
+            className="hero-title"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.1, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {displayedText}
+            {!isDone && <span className="cursor">|</span>}
+          </motion.h1>
+          <motion.div
+            className="hero-roles"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {[
+              "Software Engineer",
+              "UI/UX Designer",
+              "Physics Student @ UNILAG",
+              "Aspiring Firmware Engineer",
+            ].map((r, i) => (
+              <span key={i} className="role-chip">
+                {r}
+              </span>
+            ))}
+          </motion.div>
+          <motion.div
+            className="hero-avatar-wrap"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="avatar-ring">
+              <div className="avatar-inner">
                 <img
                   src="/avatar.jpeg"
-                  alt=""
-                  className="profile-placeholder svg"
+                  alt="Uwak Daniel"
+                  className="avatar-img"
                 />
               </div>
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="hero-intro"
+            </div>
+            <div className="avatar-glow" />
+          </motion.div>
+          <motion.p
+            className="hero-sub"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          >
+            I build scalable digital systems with clean architecture
+            <br />
+            and ship them with precision.
+          </motion.p>
+          <motion.div
+            className="hero-cta"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <button
+              className="btn-primary"
+              onClick={() =>
+                document
+                  .getElementById("projects")
+                  .scrollIntoView({ behavior: "smooth" })
+              }
             >
-              I build scalable digital systems with clean architecture.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              View Works <span className="btn-arrow">↗</span>
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={() =>
+                document
+                  .getElementById("contact")
+                  .scrollIntoView({ behavior: "smooth" })
+              }
             >
-              <MagneticButton
-                onClick={() =>
-                  document
-                    .getElementById("projects")
-                    .scrollIntoView({ behavior: "smooth" })
-                }
-              >
-                View Works →
-              </MagneticButton>
-            </motion.div>
+              Get in Touch
+            </button>
           </motion.div>
         </div>
-
-        <div className="grid-overlay"></div>
-        <div className="noise-overlay"></div>
+        <motion.div
+          className="scroll-hint"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+        >
+          <div className="scroll-line" />
+          <span>scroll</span>
+        </motion.div>
       </section>
 
-      {/* About Section */}
+      {/* ── ABOUT ── */}
       <section id="about" className="section">
         <div className="container">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            className="section-label"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="section-header"
           >
-            <h2>Über Mich / About Me</h2>
-            <div className="section-line"></div>
+            <span className="label-line" />
+            01 — About
           </motion.div>
-
-          <GlassCard delay={0.2}>
-            <div className="about-content">
+          <div className="about-layout">
+            <motion.div
+              className="about-heading"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <h2>
+                Building at the
+                <br />
+                <em>intersection</em>
+                <br />
+                of code & physics.
+              </h2>
+            </motion.div>
+            <motion.div
+              className="about-body"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.9,
+                delay: 0.15,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            >
               <p>
-                I approach technology as an engineering discipline – focused on{" "}
+                I approach technology as an engineering discipline — focused on{" "}
                 <strong>
                   architecture, scalability, and long-term maintainability
                 </strong>
                 . As an Applied Physics student at the University of Lagos, I
-                blend scientific problem-solving with software development,
-                building systems that are both technically solid and
-                thoughtfully designed.
+                blend scientific problem-solving with software development.
               </p>
-
               <p>
                 My experience spans{" "}
                 <strong>
                   full-stack development, UI/UX design, and backend systems
                 </strong>
-                , while I’m actively growing into embedded systems and firmware
-                engineering.
-                {/* <em>
-                  Die Kombination von high-level Software und hardware-naher
-                  Programmierung fasziniert mich
-                </em>{" "} */}
-                – every Arduino project deepens my understanding of timing,
-                interrupts, and real hardware constraints.
+                , while I actively grow into embedded systems and firmware
+                engineering. Every Arduino project sharpens my understanding of
+                timing, interrupts, and real hardware constraints.
               </p>
-
               <p>
-                Whether it’s designing intuitive interfaces, structuring
-                scalable APIs, or debugging microcontroller code, complex
-                problems into elegant, reliable solutions that work beyond the
-                screen.
+                Whether designing interfaces, structuring APIs, or debugging
+                microcontroller code — I turn complex problems into elegant,
+                reliable solutions.
               </p>
-            </div>
-          </GlassCard>
-        </div>
-      </section>
-
-      {/* Tech Stack Section */}
-      <section id="stack" className="section section-dark">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="section-header"
-          >
-            <h2>Werkzeuge / Tech Stack</h2>
-            <div className="section-line"></div>
-          </motion.div>
-
-          <TechMarquee />
-
-          <div className="tech-categories">
-            {Object.entries(techCategories).map(
-              ([category, techs], catIndex) => (
-                <GlassCard
-                  key={category}
-                  delay={catIndex * 0.1}
-                  className="tech-category"
-                >
-                  <h3>{category}</h3>
-                  <div className="tech-grid">
-                    {techs.map((tech, index) => (
-                      <AnimatedTechLogo
-                        key={tech.name}
-                        Icon={tech.Icon}
-                        name={tech.name}
-                        delay={catIndex * 0.1 + index * 0.05}
-                      />
-                    ))}
+              <div className="about-stats">
+                {[
+                  ["9+", "Client Projects"],
+                  ["3+", "Years Building"],
+                  ["2", "Domains Mastered"],
+                ].map(([num, label]) => (
+                  <div key={label} className="stat">
+                    <span className="stat-num">{num}</span>
+                    <span className="stat-label">{label}</span>
                   </div>
-                </GlassCard>
-              ),
-            )}
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Projects Section */}
-      <ProjectSection projects={projects} openProject={openProject} />
-
-      {/* BTS Arduino Section */}
-      <section id="bts" className="section section-dark">
+      {/* ── STACK ── */}
+      <section id="stack" className="section section-alt">
         <div className="container">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            className="section-label"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="label-line" />
+            02 — Tech Stack
+          </motion.div>
+          <motion.h2
+            className="section-title"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="section-header"
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h2>Behind the Scenes / Arduino Lernprozess</h2>
-            <div className="section-line"></div>
-            <p className="section-subtitle">My journey into embedded systems</p>
-          </motion.div>
-
-          <div className="timeline">
-            {arduinoExperiments.map((exp, index) => (
-              <GlassCard
-                key={index}
-                delay={index * 0.1}
-                className="timeline-item"
-              >
-                <div className="timeline-date">{exp.date}</div>
-                <h3>{exp.title}</h3>
-                <p>{exp.description}</p>
-                <div className="components-list">
-                  <strong>Components:</strong>
-                  <div className="component-tags">
-                    {exp.components.map((comp, i) => (
-                      <span key={i} className="component-tag">
-                        {comp}
-                      </span>
-                    ))}
-                  </div>
+            Tools I work with
+          </motion.h2>
+          <div className="marquee-track">
+            <div className="marquee-fade left" />
+            <div className="marquee-fade right" />
+            <motion.div
+              className="marquee-inner"
+              animate={{ x: [0, -1200] }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            >
+              {[...techs, ...techs, ...techs].map((t, i) => (
+                <div key={i} className="marquee-chip">
+                  <t.Icon />
+                  <span>{t.name}</span>
                 </div>
-              </GlassCard>
+              ))}
+            </motion.div>
+          </div>
+          <div className="tech-grid">
+            {techs.map((t, i) => (
+              <motion.div
+                key={t.name}
+                className="tech-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.07 }}
+                whileHover={{ y: -6, transition: { duration: 0.25 } }}
+              >
+                <div className="tech-icon">
+                  <t.Icon />
+                </div>
+                <span className="tech-name">{t.name}</span>
+              </motion.div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <GlassCard delay={0.4}>
-            <div className="learning-notes">
-              <h3>Current Focus</h3>
-              <p>
-                Deep diving into <strong>interrupt handling</strong> and{" "}
-                <strong>timer programming</strong>. Understanding how to work
-                with hardware constraints – limited RAM, precise timing
-                requirements, and power efficiency.
+      {/* ── PROJECTS ── */}
+      <section id="projects" className="section">
+        <div className="container">
+          <motion.div
+            className="section-label"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="label-line" />
+            03 — Projects
+          </motion.div>
+          <motion.h2
+            className="section-title"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Selected client work
+          </motion.h2>
+          <div className="works-grid">
+            {works.map((work, i) => (
+              <motion.div
+                key={work.name}
+                className="work-card"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  duration: 0.7,
+                  delay: i * 0.06,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                onClick={() => setActiveWork(work)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && setActiveWork(work)}
+              >
+                <div className="work-preview">
+                  <MacMockup url={work.url} color={work.color} />
+                  <div className="work-overlay">
+                    <span className="visit-btn">View Details ↗</span>
+                  </div>
+                </div>
+                <div className="work-meta">
+                  <div className="work-top">
+                    <h3 className="work-title">{work.name}</h3>
+                    <span className="work-tag">{work.tag}</span>
+                  </div>
+                  <p className="work-desc">{work.description}</p>
+                  <span className="work-url">{work.url}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BTS ── */}
+      <section id="bts" className="section section-alt">
+        <div className="container">
+          <motion.div
+            className="section-label"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="label-line" />
+            04 — Behind the Scenes
+          </motion.div>
+          <motion.h2
+            className="section-title"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            My embedded systems journey
+          </motion.h2>
+          <div className="bts-grid">
+            {arduinoExperiments.map((exp, i) => (
+              <motion.div
+                key={i}
+                className="bts-card"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: i * 0.12 }}
+              >
+                <div className="bts-date">{exp.date}</div>
+                <h3 className="bts-title">{exp.title}</h3>
+                <p className="bts-desc">{exp.description}</p>
+                <div className="bts-chips">
+                  {exp.components.map((c, j) => (
+                    <span key={j} className="bts-chip">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+            <motion.div
+              className="bts-card bts-focus"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.36 }}
+            >
+              <div className="focus-tag">Current Focus</div>
+              <h3 className="bts-title">Interrupt & Timer Programming</h3>
+              <p className="bts-desc">
+                Deep diving into hardware constraints — limited RAM, precise
+                timing, and power efficiency. Next: I²C / SPI sensor integration
+                and UART device communication.
               </p>
-              <p>
-                Next up: integrating sensors with I²C and SPI protocols, dann
-                UART communication für device-to-device messaging.
-              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CONTACT ── */}
+      <section id="contact" className="section contact-section">
+        <div className="container">
+          <motion.div
+            className="contact-inner"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="contact-label">
+              <span className="label-line" />
+              05 — Contact
             </div>
-          </GlassCard>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="section">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="section-header"
-          >
-            <h2>Kontakt / Get in Touch</h2>
-            <div className="section-line"></div>
-          </motion.div>
-
-          <GlassCard delay={0.2}>
-            <form className="contact-form">
-              <div className="form-group">
-                <input type="text" placeholder="Name" required />
+            <h2 className="contact-heading">
+              Let's build something
+              <br />
+              <em>remarkable</em> together.
+            </h2>
+            <p className="contact-sub">
+              Open to freelance projects, collaborations, and full-time
+              opportunities.
+            </p>
+            <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
+              <div className="form-row">
+                <div className="field">
+                  <label>Name</label>
+                  <input type="text" placeholder="Your name" />
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <input type="email" placeholder="your@email.com" />
+                </div>
               </div>
-              <div className="form-group">
-                <input type="email" placeholder="E-Mail" required />
+              <div className="field">
+                <label>Message</label>
+                <textarea
+                  placeholder="Tell me about your project..."
+                  rows="5"
+                />
               </div>
-              <div className="form-group">
-                <textarea placeholder="Message" rows="5" required></textarea>
-              </div>
-              <MagneticButton type="submit">Send Message</MagneticButton>
+              <button type="submit" className="btn-primary">
+                Send Message <span className="btn-arrow">→</span>
+              </button>
             </form>
-          </GlassCard>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="social-links"
-          >
-            <a href="#" className="social-link">
-              GitHub
-            </a>
-            <a href="#" className="social-link">
-              LinkedIn
-            </a>
-            <a href="#" className="social-link">
-              Twitter
-            </a>
+            <div className="social-row">
+              {["GitHub", "LinkedIn", "Twitter"].map((s) => (
+                <a key={s} href="#" className="social-link">
+                  {s}
+                </a>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── FOOTER ── */}
       <footer className="footer">
-        <div className="container">
-          <p>© 2026 Uwak Daniel Iniobong • Built with React & Framer Motion</p>
-          <p className="footer-subtitle">
-            Engineered with precision / Mit Liebe gebaut
-          </p>
+        <div className="container footer-inner">
+          <span className="footer-copy">© 2026 Uwak Daniel Iniobong</span>
+          <span className="footer-built">Built with React & Framer Motion</span>
+          <span className="footer-tag">Engineered with precision.</span>
         </div>
       </footer>
-
-      {/* Drawer */}
-      <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        project={selectedProject}
-      />
-
-      {/* Styles */}
-      <style jsx>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        .signature {
-          width: 90px;
-        }
-
-        .avatar {
-          width: 200px;
-          height: 200px;
-        }
-
-        .php {
-          width: 40px;
-        }
-
-        .projects-tabs {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 24px;
-          flex-wrap: wrap;
-        }
-
-        .tab {
-          padding: 8px 14px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: var(--gray-300);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .tab.active {
-          background: rgba(255, 255, 255, 0.12);
-          color: white;
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .pagination {
-          margin-top: 24px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .pagination button {
-          background: rgba(255, 255, 255, 0.08);
-          border: none;
-          padding: 6px 12px;
-          border-radius: 8px;
-        }
-
-        :root {
-          --black: #0a0a0a;
-          --white: #ffffff;
-          --gray-100: #f5f5f5;
-          --gray-200: #e0e0e0;
-          --gray-300: #bdbdbd;
-          --gray-400: #9e9e9e;
-          --gray-500: #757575;
-          --gray-600: #616161;
-          --gray-700: #424242;
-          --gray-800: #2e2e2e;
-          --gray-900: #1a1a1a;
-        }
-
-        body {
-          font-family: "Space Mono", "Courier New", monospace;
-          background: var(--black);
-          color: var(--white);
-          overflow-x: hidden;
-        }
-
-        .portfolio {
-          position: relative;
-          min-height: 100vh;
-        }
-
-        /* Progress Bar */
-        .progress-bar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: var(--white);
-          transform-origin: 0%;
-          z-index: 9999;
-          box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        /* Navigation */
-        .nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 1000;
-          background: rgba(10, 10, 10, 0.8);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-content {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 1.5rem 2rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .nav-logo {
-          font-size: 1.25rem;
-          font-weight: 700;
-          letter-spacing: 2px;
-          font-family: "Space Mono", monospace;
-        }
-
-        .nav-toggle {
-          display: none;
-          flex-direction: column;
-          gap: 4px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.5rem;
-        }
-
-        .nav-toggle span {
-          width: 24px;
-          height: 2px;
-          background: var(--white);
-          transition: all 0.3s;
-        }
-
-        .nav-links {
-          display: flex;
-          gap: 2rem;
-          align-items: center;
-        }
-
-        .nav-links a {
-          color: var(--white);
-          text-decoration: none;
-          font-size: 0.9rem;
-          transition: opacity 0.3s;
-          position: relative;
-        }
-
-        .nav-links a:hover {
-          opacity: 0.7;
-        }
-
-        .nav-links a::after {
-          content: "";
-          position: absolute;
-          bottom: -4px;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: var(--white);
-          transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-          width: 100%;
-        }
-
-        /* Container */
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 2rem;
-        }
-
-        /* Section */
-        .section {
-          padding: 8rem 0;
-          position: relative;
-        }
-
-        .section-dark {
-          background: linear-gradient(
-            180deg,
-            var(--black) 0%,
-            var(--gray-900) 100%
-          );
-        }
-
-        .section-header {
-          text-align: center;
-          margin-bottom: 4rem;
-        }
-
-        .section-header h2 {
-          font-size: 3rem;
-          font-weight: 700;
-          margin-bottom: 1rem;
-          font-family: "Space Mono", monospace;
-          letter-spacing: -1px;
-        }
-
-        .section-line {
-          width: 60px;
-          height: 2px;
-          background: var(--white);
-          margin: 0 auto;
-        }
-
-        .section-subtitle {
-          margin-top: 1rem;
-          color: var(--gray-400);
-          font-size: 1.1rem;
-        }
-
-        /* Hero */
-        .hero {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          padding-top: 80px;
-        }
-
-        .hero-content {
-          text-align: center;
-          z-index: 1;
-          padding-top: 30px;
-          padding-bottom: 30px;
-        }
-
-        .hero-label {
-          font-size: 0.85rem;
-          letter-spacing: 3px;
-          color: var(--gray-400);
-          margin-bottom: 1rem;
-        }
-
-        .hero h1 {
-          font-size: 5rem;
-          font-weight: 900;
-          margin-bottom: 1rem;
-          line-height: 1.1;
-          font-family: "Space Mono", monospace;
-        }
-
-        .gradient-text {
-          background: linear-gradient(
-            135deg,
-            var(--white) 0%,
-            var(--gray-400) 100%
-          );
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .hero-roles {
-          font-size: 1.1rem;
-          color: var(--gray-400);
-          margin-bottom: 2rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        }
-
-        .separator {
-          color: var(--gray-600);
-        }
-
-        .profile-frame {
-          width: 200px;
-          height: 200px;
-          margin: 2rem auto;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          padding: 4px;
-          background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            rgba(255, 255, 255, 0.05) 100%
-          );
-          backdrop-filter: blur(10px);
-          z-index: 99;
-        }
-
-        .profile-placeholder {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.05);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .profile-placeholder svg {
-          width: 100px;
-          height: 100%;
-          color: var(--gray-600);
-        }
-
-        .hero-intro {
-          max-width: 600px;
-          margin: 0 auto 2rem;
-          font-size: 1.1rem;
-          line-height: 1.8;
-          color: var(--gray-300);
-        }
-
-        /* Glass Card */
-        .glass-card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 2rem;
-          transition: all 0.3s;
-        }
-
-        .glass-card:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.2);
-          box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
-        }
-
-        /* Buttons */
-        .magnetic-btn {
-          padding: 1rem 2rem;
-          font-size: 1rem;
-          font-family: "Space Mono", monospace;
-          background: var(--white);
-          color: var(--black);
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 600;
-          transition: all 0.3s;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .magnetic-btn:hover {
-          box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
-        }
-
-        .magnetic-btn.secondary {
-          background: transparent;
-          color: var(--white);
-          border: 1px solid var(--white);
-        }
-
-        .magnetic-btn.secondary:hover {
-          background: var(--white);
-          color: var(--black);
-        }
-
-        /* About */
-        .about-content p {
-          margin-bottom: 1.5rem;
-          line-height: 1.8;
-          color: var(--gray-300);
-          font-size: 1.05rem;
-        }
-
-        .about-content strong {
-          color: var(--white);
-        }
-
-        /* Tech Stack */
-        .marquee-container {
-          margin: 3rem 0;
-          overflow: hidden;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 2rem 0;
-        }
-
-        .marquee {
-          display: flex;
-          gap: 4rem;
-          width: max-content;
-        }
-
-        .marquee-item {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          white-space: nowrap;
-        }
-
-        .marquee-item svg {
-          width: 32px;
-          height: 32px;
-          color: var(--white);
-        }
-
-        .marquee-item span {
-          font-size: 1.2rem;
-          color: var(--gray-300);
-        }
-
-        .tech-categories {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 2rem;
-          margin-top: 3rem;
-        }
-
-        .tech-category h3 {
-          margin-bottom: 1.5rem;
-          font-size: 1.3rem;
-          color: var(--gray-400);
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          font-size: 0.9rem;
-        }
-
-        .tech-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .tech-logo-wrapper {
-          cursor: pointer;
-        }
-
-        .tech-logo {
-          position: relative;
-          aspect-ratio: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          transition: all 0.3s;
-        }
-
-        .tech-logo svg {
-          width: 40px;
-          height: 40px;
-          color: var(--white);
-          transition: all 0.3s;
-        }
-
-        .tech-logo.hovered {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.3);
-          box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
-
-        .tech-name {
-          position: absolute;
-          bottom: -30px;
-          left: 50%;
-          transform: translateX(-50%);
-          white-space: nowrap;
-          font-size: 0.75rem;
-          color: var(--gray-400);
-        }
-
-        /* Projects */
-        .projects-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: 2rem;
-        }
-
-        .project-card h3 {
-          font-size: 1.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .project-tags {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-          margin-bottom: 1rem;
-        }
-
-        .tag {
-          padding: 0.25rem 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-          font-size: 0.75rem;
-          color: var(--gray-300);
-        }
-
-        .project-preview {
-          color: var(--gray-400);
-          line-height: 1.6;
-          margin-bottom: 1.5rem;
-        }
-
-        /* Drawer */
-        .drawer-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.8);
-          z-index: 2000;
-          backdrop-filter: blur(4px);
-        }
-
-        .drawer {
-          position: fixed;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: min(600px, 90vw);
-          background: var(--gray-900);
-          border-left: 1px solid rgba(255, 255, 255, 0.1);
-          z-index: 2001;
-          overflow-y: auto;
-        }
-
-        .drawer-close {
-          position: absolute;
-          top: 1.5rem;
-          right: 1.5rem;
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          color: var(--white);
-          font-size: 1.5rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s;
-        }
-
-        .drawer-close:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-
-        .drawer-content {
-          padding: 3rem;
-        }
-
-        .drawer-content h2 {
-          font-size: 2.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .drawer-tags {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-          margin-bottom: 2rem;
-        }
-
-        .drawer-section {
-          margin-bottom: 2.5rem;
-        }
-
-        .drawer-section h3 {
-          font-size: 1.3rem;
-          color: var(--gray-400);
-          margin-bottom: 1rem;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          font-size: 0.9rem;
-        }
-
-        .drawer-section p {
-          line-height: 1.8;
-          color: var(--gray-300);
-        }
-
-        /* Timeline */
-        .timeline {
-          display: flex;
-          flex-direction: column;
-          gap: 2rem;
-        }
-
-        .timeline-item {
-          position: relative;
-          padding-left: 2rem;
-        }
-
-        .timeline-item::before {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: linear-gradient(
-            180deg,
-            var(--white) 0%,
-            transparent 100%
-          );
-        }
-
-        .timeline-date {
-          font-size: 0.85rem;
-          color: var(--gray-500);
-          margin-bottom: 0.5rem;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        }
-
-        .timeline-item h3 {
-          font-size: 1.5rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .timeline-item p {
-          color: var(--gray-300);
-          line-height: 1.6;
-          margin-bottom: 1rem;
-        }
-
-        .components-list {
-          margin-top: 1rem;
-        }
-
-        .components-list strong {
-          color: var(--gray-400);
-          font-size: 0.85rem;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .component-tags {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-          margin-top: 0.5rem;
-        }
-
-        .component-tag {
-          padding: 0.25rem 0.75rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
-          font-size: 0.75rem;
-          color: var(--gray-400);
-        }
-
-        .learning-notes h3 {
-          font-size: 1.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .learning-notes p {
-          color: var(--gray-300);
-          line-height: 1.8;
-          margin-bottom: 1rem;
-        }
-
-        /* Contact Form */
-        .contact-form {
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .form-group {
-          margin-bottom: 1.5rem;
-        }
-
-        .form-group input,
-        .form-group textarea {
-          width: 100%;
-          padding: 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
-          color: var(--white);
-          font-family: "Space Mono", monospace;
-          font-size: 1rem;
-          transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-          outline: none;
-          border-color: rgba(255, 255, 255, 0.3);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .form-group textarea {
-          resize: vertical;
-        }
-
-        .social-links {
-          display: flex;
-          justify-content: center;
-          gap: 2rem;
-          margin-top: 3rem;
-        }
-
-        .social-link {
-          color: var(--white);
-          text-decoration: none;
-          font-size: 1.1rem;
-          transition: opacity 0.3s;
-        }
-
-        .social-link:hover {
-          opacity: 0.7;
-        }
-
-        /* Footer */
-        .footer {
-          padding: 3rem 0;
-          text-align: center;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          background: var(--gray-900);
-        }
-
-        .footer p {
-          color: var(--gray-500);
-          margin-bottom: 0.5rem;
-        }
-
-        .footer-subtitle {
-          font-size: 0.85rem;
-        }
-
-        /* Overlays */
-        .grid-overlay {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(
-              90deg,
-              rgba(255, 255, 255, 0.03) 1px,
-              transparent 1px
-            );
-          background-size: 50px 50px;
-          pointer-events: none;
-        }
-
-        .noise-overlay {
-          position: absolute;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-          pointer-events: none;
-          opacity: 0.5;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-          .nav-toggle {
-            display: flex;
-          }
-
-          .nav-links {
-            position: fixed;
-            top: 70px;
-            left: 0;
-            right: 0;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            flex-direction: column;
-            padding: 2rem;
-            gap: 1.5rem;
-            transform: translateY(-100%);
-            opacity: 0;
-            transition: all 0.3s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          }
-
-          .nav-links.open {
-            transform: translateY(0);
-            opacity: 1;
-          }
-
-          .hero h1 {
-            font-size: 3rem;
-          }
-
-          .hero-roles {
-            flex-direction: column;
-            gap: 3px;
-          }
-
-          .section-header h2 {
-            font-size: 2rem;
-          }
-
-          .projects-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .tech-categories {
-            grid-template-columns: 1fr;
-          }
-
-          .drawer {
-            width: 100vw;
-          }
-        }
-      `}</style>
     </div>
   );
 }
